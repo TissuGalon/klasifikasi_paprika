@@ -1,3 +1,6 @@
+"use client"
+
+import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 const sessions = [
@@ -7,8 +10,90 @@ const sessions = [
 ]
 
 export default function ProfilePage() {
+  const [profileImage, setProfileImage] = useState("https://lh3.googleusercontent.com/aida-public/AB6AXuDOJgc7KknXztXxlcsTTyRJMPp2mF_S0DLAWPFylVXUO3AJjcjNk3B6zE9qDsYur7C1kBiBtoa9kT1msRVal9fACZG1Smw1_0NBwEpoomCWo4B2qhF_I1BUZyMclSGyCcLQvls32PYac6NXr0musmnw4fXpkN59UtzKj1cwKSTOcPk-9Sb4I6zux1M6sAUdL-BGj94aaucPPSH1QUpUe9hCWgO5zAcMZS17kwZccZn2yH1nDr3vp67OINV3tYtiBM4yVjhaISLVe58")
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
+  const [stream, setStream] = useState<MediaStream | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream
+    }
+  }, [stream, isCameraOpen])
+
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+      }
+    }
+  }, [stream])
+
+  const toggleCamera = async () => {
+    if (isCameraOpen) {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+        setStream(null)
+      }
+      setIsCameraOpen(false)
+    } else {
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: true })
+        setStream(newStream)
+        setIsCameraOpen(false) // Reset first
+        setIsCameraOpen(true)
+      } catch (err) {
+        alert("Gagal mengakses kamera. Pastikan izin diberikan.")
+      }
+    }
+  }
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement("canvas")
+      canvas.width = videoRef.current.videoWidth
+      canvas.height = videoRef.current.videoHeight
+      canvas.getContext("2d")?.drawImage(videoRef.current, 0, 0)
+      setProfileImage(canvas.toDataURL("image/jpeg"))
+      toggleCamera()
+    }
+  }
+
   return (
-    <div className="p-12 max-w-7xl mx-auto space-y-12 bg-surface">
+    <div className="p-12 max-w-7xl mx-auto space-y-12 bg-surface relative">
+      {/* Camera Modal Overlay */}
+      {isCameraOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-surface rounded-2xl p-6 max-w-md w-full shadow-2xl border border-outline-variant/20">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-heading font-bold">Ambil Foto Profil</h3>
+              <button onClick={toggleCamera} className="material-symbols-outlined text-stone-400 hover:text-error transition-colors">close</button>
+            </div>
+            <div className="relative aspect-square bg-stone-900 rounded-xl overflow-hidden mb-6 border border-primary/20">
+              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover grayscale-0" />
+              <div className="absolute inset-0 border-2 border-primary/30 pointer-events-none flex items-center justify-center">
+                 <div className="w-64 h-64 border-2 border-white/50 rounded-full border-dashed"></div>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <button 
+                onClick={capturePhoto}
+                className="flex-1 py-3 bg-primary text-on-primary font-bold rounded-xl hover:opacity-90 flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined">photo_camera</span>
+                Ambil Foto
+              </button>
+              <button 
+                onClick={toggleCamera}
+                className="px-6 py-3 bg-surface-container-highest font-bold rounded-xl hover:bg-stone-200 transition-colors"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header>
         <h2 className="text-4xl font-heading font-extrabold tracking-tight text-on-surface mb-2">Profil Admin</h2>
         <p className="text-on-surface-variant max-w-2xl font-sans">Kelola kredensial peneliti Anda dan pantau keamanan akun di seluruh jaringan Lab Botani.</p>
@@ -23,10 +108,13 @@ export default function ProfilePage() {
               <div className="relative mb-6">
                 <img 
                   className="w-32 h-32 rounded-xl object-cover shadow-2xl ring-4 ring-white" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOJgc7KknXztXxlcsTTyRJMPp2mF_S0DLAWPFylVXUO3AJjcjNk3B6zE9qDsYur7C1kBiBtoa9kT1msRVal9fACZG1Smw1_0NBwEpoomCWo4B2qhF_I1BUZyMclSGyCcLQvls32PYac6NXr0musmnw4fXpkN59UtzKj1cwKSTOcPk-9Sb4I6zux1M6sAUdL-BGj94aaucPPSH1QUpUe9hCWgO5zAcMZS17kwZccZn2yH1nDr3vp67OINV3tYtiBM4yVjhaISLVe58"
+                  src={profileImage}
                   alt="Budi Santoso"
                 />
-                <button className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-lg shadow-lg hover:bg-primary-container transition-colors active:scale-95">
+                <button 
+                  onClick={toggleCamera}
+                  className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-lg shadow-lg hover:bg-primary-container transition-colors active:scale-95"
+                >
                   <span className="material-symbols-outlined text-lg">edit</span>
                 </button>
               </div>
@@ -47,7 +135,10 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-4 font-sans">
-            <button className="w-full flex items-center justify-between p-4 bg-surface-container-highest rounded-xl group hover:bg-primary/5 transition-colors">
+            <button 
+              onClick={toggleCamera}
+              className="w-full flex items-center justify-between p-4 bg-surface-container-highest rounded-xl group hover:bg-primary/5 transition-colors"
+            >
               <div className="flex items-center gap-4">
                 <span className="material-symbols-outlined text-primary">photo_camera</span>
                 <span className="font-bold text-sm">Perbarui Foto</span>

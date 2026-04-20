@@ -73,7 +73,7 @@ export default function LoginPage() {
           <div className="w-full max-w-sm space-y-10">
             <div className="space-y-2 text-center md:text-left">
               <h3 className="text-3xl font-heading font-black text-on-surface tracking-tight">Selamat Datang.</h3>
-              <p className="text-on-surface-variant font-sans text-sm">Masukkan kredensial Anda untuk mengakses dasbor lab.</p>
+              <p className="text-on-surface-variant font-sans text-sm">Masukkan kredensial Anda untuk mengakses dashboard lab.</p>
             </div>
 
             <form className="space-y-6">

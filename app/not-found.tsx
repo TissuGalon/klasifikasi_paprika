@@ -21,7 +21,7 @@ export default function NotFound() {
               href="/dashboard"
               className="px-6 py-3 bg-primary text-on-primary font-bold rounded-xl hover:opacity-90 transition-opacity"
             >
-              Kembali ke Dasbor
+              Kembali ke Dashboard
             </Link>
           </div>
         </div>
