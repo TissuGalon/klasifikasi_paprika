@@ -1,12 +1,33 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 
-const logs = [
-  { id: "#LAB-9921", name: "Hawar Awal Tomat", species: "Solanum lycopersicum", timestamp: "24 Okt 2023 • 14:22", status: "DITINJAU", statusColor: "bg-tertiary-container text-on-tertiary-container", confidence: "98.2%" },
-  { id: "#LAB-9844", name: "Cabai Paprika Sehat", species: "Capsicum annuum", timestamp: "24 Okt 2023 • 12:45", status: "DIARSIPKAN", statusColor: "bg-secondary-container text-on-secondary-container", confidence: "99.7%" },
-  { id: "#LAB-9701", name: "Bercak Bakteri", species: "Capsicum annuum", timestamp: "24 Okt 2023 • 09:12", status: "PENDING", statusColor: "bg-error-container text-on-error-container", confidence: "92.1%" },
-]
-
 export default function HistoryPage() {
+  const [logs, setLogs] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchLogs() {
+      try {
+        const { data, error } = await supabase
+          .from("classifications")
+          .select("*")
+          .order("created_at", { ascending: false })
+        
+        if (error) throw error
+        setLogs(data || [])
+      } catch (error) {
+        console.error("Error fetching logs:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLogs()
+  }, [])
+
   return (
     <div className="p-8 space-y-8 bg-surface">
       <header className="max-w-6xl mx-auto flex justify-between items-end">
@@ -27,41 +48,51 @@ export default function HistoryPage() {
       </header>
 
       <section className="max-w-6xl mx-auto">
-        <div className="bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10">
-          <table className="w-full text-left font-sans">
-            <thead className="bg-surface-container-high">
-              <tr>
-                {["ID", "Klasifikasi", "Spesies", "Waktu", "Kepercayaan", "Status", "Aksi"].map((h) => (
-                  <th key={h} className="px-6 py-4 text-[10px] uppercase tracking-widest text-stone-500 font-bold">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/10 bg-surface-container-lowest">
-              {logs.map((log) => (
-                <tr key={log.id} className="group hover:bg-surface-container-low transition-colors">
-                  <td className="px-6 py-4 font-mono text-xs">{log.id}</td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-bold text-on-surface">{log.name}</p>
-                  </td>
-                  <td className="px-6 py-4 text-xs italic text-stone-500">{log.species}</td>
-                  <td className="px-6 py-4 text-xs text-stone-500">{log.timestamp}</td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-black text-primary">{log.confidence}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={cn("px-3 py-1 text-[10px] font-bold rounded-full", log.statusColor)}>
-                      {log.status}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <div className="col-span-full py-20 text-center animate-pulse text-emerald-950/40 font-black uppercase tracking-widest font-heading">
+              Sinkronisasi Riwayat Neural...
+            </div>
+          ) : logs.length > 0 ? (
+            logs.map((log) => (
+              <div key={log.id} className="bg-white rounded-3xl overflow-hidden border border-stone-100 shadow-sm hover:shadow-xl transition-all group">
+                <div className="relative h-48 bg-stone-100">
+                  <img src={log.image_url || log.image} alt={log.result || log.label} className="w-full h-full object-cover" />
+                  <div className="absolute top-4 left-4">
+                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest", 
+                      (log.result || log.label) === 'Sehat' ? "bg-emerald-500" : "bg-red-500"
+                    )}>
+                      {log.status || (log.result === 'Sehat' ? 'Optimal' : 'Kritis')}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button className="p-2 text-stone-400 group-hover:text-primary transition-colors">
-                      <span className="material-symbols-outlined">visibility</span>
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">
+                        {new Date(log.created_at || log.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                      <h4 className="text-xl font-heading font-black text-on-surface">{log.result || log.label}</h4>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">Akurasi</p>
+                      <p className="text-lg font-bold text-emerald-600">{(log.confidence * 100).toFixed(1)}%</p>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-stone-50 flex justify-between items-center">
+                    <span className="text-xs font-medium text-stone-500 font-sans italic italic-custom">ID: {log.id.slice(0, 8)}</span>
+                    <button className="p-2 bg-stone-50 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                      <span className="material-symbols-outlined text-sm">visibility</span>
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full py-20 text-center text-stone-400 font-sans italic">
+              Belum ada riwayat klasifikasi. Mulai dengan melakukan scan pertama Anda.
+            </div>
+          )}
         </div>
       </section>
     </div>

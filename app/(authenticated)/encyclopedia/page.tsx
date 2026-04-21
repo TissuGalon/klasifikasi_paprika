@@ -2,6 +2,8 @@
 
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 
 const historyTimeline = [
   { year: "7000 SM", event: "Asal-Usul", desc: "Paprika liar pertama kali ditemukan di Amerika Tengah dan Selatan (Mesoamerika)." },
@@ -10,13 +12,21 @@ const historyTimeline = [
   { year: "Modern", event: "Era Pemulian", desc: "Pengembangan varietas hibrida unggul yang tahan penyakit dan memiliki warna beragam." },
 ]
 
-const diseases = [
-  { name: "Bercak Bakteri", agent: "Xanthomonas", desc: "Bintik gelap dengan halo kuning pada daun. Menyebar cepat lewat air.", icon: "microbe" },
-  { name: "Hawar Daun", agent: "Alternaria", desc: "Lesi konsentris seperti lingkaran pohon. Mematikan jaringan daun secara sistemik.", icon: "coronavirus" },
-  { name: "Virus Mosaik", agent: "TMV", desc: "Pola belang kuning-hijau dan daun mengerut. Menghambat fotosintesis secara total.", icon: "bug_report" },
-]
-
 export default function EncyclopediaPage() {
+  const [diseases, setDiseases] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchDiseases() {
+      const { data, error } = await supabase
+        .from('diseases')
+        .select('*')
+      
+      if (data) setDiseases(data)
+      setLoading(false)
+    }
+    fetchDiseases()
+  }, [])
   return (
     <div className="min-h-screen bg-stone-50 pb-20">
       {/* Dynamic Header */}
@@ -138,18 +148,28 @@ export default function EncyclopediaPage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {diseases.map((d) => (
-              <div key={d.name} className="bg-white p-8 rounded-3xl border border-stone-100 shadow-sm hover:shadow-xl transition-all group flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                  <span className="material-symbols-outlined text-3xl">{d.icon}</span>
-                </div>
-                <h4 className="text-lg font-bold text-on-surface mb-1">{d.name}</h4>
-                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-4">{d.agent}</p>
-                <p className="text-sm text-on-surface-variant font-sans leading-relaxed">
-                  {d.desc}
-                </p>
+            {loading ? (
+              <div className="col-span-full py-20 text-center animate-pulse text-emerald-900/40 font-black uppercase tracking-widest">
+                Menghubungkan ke Pusat Pengetahuan...
               </div>
-            ))}
+            ) : diseases.length > 0 ? (
+              diseases.map((d) => (
+                <div key={d.name} className="bg-white p-8 rounded-3xl border border-stone-100 shadow-sm hover:shadow-xl transition-all group flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                    <span className="material-symbols-outlined text-3xl">{d.icon || 'microbe'}</span>
+                  </div>
+                  <h4 className="text-lg font-bold text-on-surface mb-1">{d.name}</h4>
+                  <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-4">{d.agent || d.scientific_name}</p>
+                  <p className="text-sm text-on-surface-variant font-sans leading-relaxed">
+                    {d.description || d.desc}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center text-stone-400 font-sans italic">
+                Data penyakit belum tersedia.
+              </div>
+            )}
           </div>
         </section>
 

@@ -2,8 +2,9 @@
 
 import { cn } from "@/lib/utils"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Modal } from "@/components/ui/modal"
+import { supabase } from "@/lib/supabase"
 
 type DetailItem = {
   type: 'variety' | 'nutrition' | 'anatomy' | 'internal'
@@ -113,6 +114,22 @@ const anatomyItems: DetailItem[] = [
 
 export default function DashboardPage() {
   const [selectedDetail, setSelectedDetail] = useState<DetailItem | null>(null)
+  const [latestAnalysis, setLatestAnalysis] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchLatest() {
+      const { data, error } = await supabase
+        .from('classifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+      
+      if (data && data.length > 0) setLatestAnalysis(data[0])
+      setLoading(false)
+    }
+    fetchLatest()
+  }, [])
 
 
 
@@ -256,18 +273,33 @@ export default function DashboardPage() {
           <div className="bg-surface-container-lowest rounded-3xl p-8 border border-outline-variant/10 shadow-sm space-y-6">
             <h4 className="text-sm font-heading font-black text-on-surface tracking-tight uppercase">Analisis Terakhir</h4>
             <div className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/5">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700">
-                  <span className="material-symbols-outlined">warning</span>
+              {loading ? (
+                <div className="py-8 text-center animate-pulse text-stone-300">...</div>
+              ) : latestAnalysis ? (
+                <>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", latestAnalysis.result === 'Sehat' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
+                      <span className="material-symbols-outlined">{latestAnalysis.result === 'Sehat' ? 'verified' : 'warning'}</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-on-surface">{latestAnalysis.result}</p>
+                      <p className="text-[10px] text-stone-500 font-bold">
+                        {new Date(latestAnalysis.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • {(latestAnalysis.confidence * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                  <Link href="/history" className="block w-full py-2 bg-on-surface text-surface text-[10px] font-black uppercase tracking-widest rounded-lg hover:opacity-90 text-center">
+                    Buka Riwayat
+                  </Link>
+                </>
+              ) : (
+                <div className="py-8 text-center space-y-4">
+                  <p className="text-[10px] text-stone-400 font-bold italic">Belum ada analisis</p>
+                  <Link href="/scan" className="block w-full py-2 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 text-center">
+                    Mulai Scan
+                  </Link>
                 </div>
-                <div>
-                  <p className="text-xs font-black text-on-surface">Bercak Bakteri</p>
-                  <p className="text-[10px] text-stone-500 font-bold">Teridentifikasi 2 jam lalu</p>
-                </div>
-              </div>
-              <button className="w-full py-2 bg-on-surface text-surface text-[10px] font-black uppercase tracking-widest rounded-lg hover:opacity-90">
-                Buka Riwayat
-              </button>
+              )}
             </div>
 
             <div className="space-y-4 pt-4 border-t border-outline-variant/10">

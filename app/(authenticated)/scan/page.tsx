@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase"
 
 
 export default function ScanPage() {
@@ -42,6 +43,26 @@ export default function ScanPage() {
     }
   }
 
+  const saveClassification = async (result: string, confidence: number, imageUrl: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('classifications')
+        .insert([
+          { 
+            result, 
+            confidence: confidence / 100, 
+            image_url: imageUrl,
+            status: 'COMPLETED'
+          }
+        ])
+      
+      if (error) throw error
+      console.log("Analysis saved:", data)
+    } catch (err) {
+      console.error("Error saving classification:", err)
+    }
+  }
+
   const startAnalysis = () => {
     setIsAnalyzing(true)
     setShowResults(false)
@@ -49,6 +70,9 @@ export default function ScanPage() {
     setTimeout(() => {
       setIsAnalyzing(false)
       setShowResults(true)
+      
+      // Auto-save result to Supabase
+      saveClassification("Bercak Bakteri", 98.4, imagePreview || "https://placeholder.com")
     }, 3000)
   }
 
@@ -277,9 +301,12 @@ export default function ScanPage() {
                 </div>
 
                 <div className="pt-4 border-t border-surface-container">
-                  <button className="w-full py-3 bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg">
+                  <button 
+                    onClick={() => alert("Laporan telah disimpan ke Riwayat Klasifikasi.")}
+                    className="w-full py-3 bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg"
+                  >
                     <span className="material-symbols-outlined">description</span>
-                    Simpan Laporan Hasil
+                    Lihat Laporan Lengkap
                   </button>
                 </div>
               </div>

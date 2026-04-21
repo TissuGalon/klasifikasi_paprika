@@ -1,7 +1,7 @@
 "use client"
 
-import { cn } from "@/lib/utils"
-import Link from "next/link"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 
 const morphologyData = [
   { label: "Jenis Daun", value: "Daun Tunggal", desc: "Satu helaian pada satu petiolus (tangkai).", icon: "potted_plant" },
@@ -10,42 +10,21 @@ const morphologyData = [
   { label: "Pertulangan", value: "Pinnate (Menyirip)", desc: "Pola tulang daun menjalar dari ibu tulang.", icon: "Account_Tree" },
 ]
 
-const internalAnatomy = [
-  {
-    name: "Kutikula (Waxy Layer)",
-    function: "Benteng Pertahanan Utama",
-    desc: "Lapisan lilin transparan yang mencegah penguapan air berlebih dan menghambat perkecambahan spora jamur pada permukaan daun.",
-    importance: "Kutikula yang tipis membuat tanaman lebih rentan terhadap Bacterial Spot.",
-    color: "bg-blue-500",
-    icon: "layers"
-  },
-  {
-    name: "Epidermis (Atas & Bawah)",
-    function: "Jaringan Pelindung",
-    desc: "Satu lapis sel yang tersusun rapat. Epidermis atas memiliki kutikula lebih tebal, sedangkan epidermis bawah kaya akan stomata.",
-    importance: "Epidermis yang rusak akibat serangan serangga menjadi pintu masuk utama virus.",
-    color: "bg-emerald-500",
-    icon: "shield"
-  },
-  {
-    name: "Mesofil Palisade",
-    function: "Pusat Fotosintesis",
-    desc: "Sel silindris tegak yang kaya akan kloroplas. Susunan rapatnya memaksimalkan penangkapan energi matahari.",
-    importance: "Efek 'Mosaik' pada virus biasanya merusak susunan kloroplas di jaringan ini.",
-    color: "bg-green-600",
-    icon: "wb_sunny"
-  },
-  {
-    name: "Stomata & Sel Penjaga",
-    function: "Pertukaran Gas",
-    desc: "Pori-pori kecil untuk respirasi dan fotosintesis. Sel penjaga mengontrol buka-tutup pori berdasarkan kelembapan.",
-    importance: "Titik lemah: Bakteri pathogen seringkali berenang masuk melalui stomata saat kondisi lembap.",
-    color: "bg-teal-500",
-    icon: "air"
-  }
-]
-
 export default function AnatomyPage() {
+  const [internalAnatomy, setInternalAnatomy] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchAnatomy() {
+      const { data, error } = await supabase
+        .from('anatomy')
+        .select('*')
+      
+      if (data) setInternalAnatomy(data)
+      setLoading(false)
+    }
+    fetchAnatomy()
+  }, [])
   return (
     <div className="min-h-screen bg-stone-50 pb-24">
       {/* Hero Section */}
@@ -97,34 +76,44 @@ export default function AnatomyPage() {
               <p className="text-stone-500 font-sans max-w-xl mx-auto">Melihat lebih dekat jaringan internal yang menjadi medan tempur antara tanaman dan patogen.</p>
            </div>
 
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {internalAnatomy.map((a) => (
-                <div key={a.name} className="bg-white rounded-[2rem] p-8 border border-stone-100 shadow-sm overflow-hidden relative group">
-                   <div className={cn("absolute top-0 right-0 w-24 h-24 opacity-5 transition-transform group-hover:scale-150 group-hover:opacity-10", a.color)}></div>
-                   <div className="flex gap-6">
-                      <div className={cn("w-16 h-16 rounded-3xl shrink-0 flex items-center justify-center shadow-lg transform transition-transform group-hover:rotate-12", a.color)}>
-                         <span className="material-symbols-outlined text-white text-3xl">{a.icon}</span>
-                      </div>
-                      <div className="space-y-4">
-                         <div>
-                            <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">{a.function}</p>
-                            <h3 className="text-2xl font-heading font-black text-on-surface">{a.name}</h3>
-                         </div>
-                         <p className="text-sm text-stone-600 leading-relaxed font-sans">{a.desc}</p>
-                         <div className="pt-4 border-t border-stone-50">
-                            <div className="flex items-start gap-3">
-                               <span className="material-symbols-outlined text-amber-500 text-md">warning</span>
-                               <p className="text-[11px] font-bold text-stone-500 font-sans italic italic-custom">
-                                  <span className="text-on-surface uppercase tracking-tighter mr-1">Relevansi Diagnosa:</span>
-                                  {a.importance}
-                                </p>
-                            </div>
-                         </div>
-                      </div>
-                   </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {loading ? (
+                <div className="col-span-full py-20 text-center animate-pulse text-emerald-900/40 font-black uppercase tracking-widest">
+                  Mengintip Struktur Mikroskopis...
                 </div>
-              ))}
-           </div>
+              ) : internalAnatomy.length > 0 ? (
+                internalAnatomy.map((a) => (
+                  <div key={a.name} className="bg-white rounded-[2rem] p-8 border border-stone-100 shadow-sm overflow-hidden relative group">
+                    <div className={cn("absolute top-0 right-0 w-24 h-24 opacity-5 transition-transform group-hover:scale-150 group-hover:opacity-10", a.color)}></div>
+                    <div className="flex gap-6">
+                        <div className={cn("w-16 h-16 rounded-3xl shrink-0 flex items-center justify-center shadow-lg transform transition-transform group-hover:rotate-12", a.color)}>
+                          <span className="material-symbols-outlined text-white text-3xl">{a.icon || 'layers'}</span>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">{a.function}</p>
+                              <h3 className="text-2xl font-heading font-black text-on-surface">{a.name}</h3>
+                          </div>
+                          <p className="text-sm text-stone-600 leading-relaxed font-sans">{a.description || a.desc}</p>
+                          <div className="pt-4 border-t border-stone-50">
+                              <div className="flex items-start gap-3">
+                                <span className="material-symbols-outlined text-amber-500 text-md">warning</span>
+                                <p className="text-[11px] font-bold text-stone-500 font-sans italic italic-custom">
+                                    <span className="text-on-surface uppercase tracking-tighter mr-1">Relevansi Diagnosa:</span>
+                                    {a.importance}
+                                  </p>
+                              </div>
+                          </div>
+                        </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-20 text-center text-stone-400 font-sans italic">
+                  Data anatomi belum tersedia.
+                </div>
+              )}
+            </div>
         </div>
 
         {/* Pathology Connection Section */}

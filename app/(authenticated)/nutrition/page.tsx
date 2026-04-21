@@ -1,7 +1,7 @@
 "use client"
 
-import { cn } from "@/lib/utils"
-import Link from "next/link"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 
 const nutritionData = [
   { 
@@ -36,7 +36,7 @@ const nutritionData = [
   },
 ]
 
-const healthBenefits = [
+const healthBenefitsFallback = [
   {
     title: "Benteng Imunitas",
     desc: "Kandungan Vitamin C yang sangat tinggi membantu produksi sel darah putih untuk melawan infeksi patogen dan virus.",
@@ -51,23 +51,23 @@ const healthBenefits = [
     color: "text-emerald-600",
     bg: "bg-emerald-50"
   },
-  {
-    title: "Kesehatan Jantung",
-    desc: "Vitamin B6 dan Folat menurunkan kadar homosistein, protein yang dapat merusak pembuluh darah.",
-    icon: "favorite",
-    color: "text-red-600",
-    bg: "bg-red-50"
-  },
-  {
-    title: "Produksi Kolagen",
-    desc: "Membantu sintesis kolagen untuk menjaga elastisitas kulit dan mempercepat penyembuhan luka.",
-    icon: "auto_fix_high",
-    color: "text-orange-600",
-    bg: "bg-orange-50"
-  }
 ]
 
 export default function NutritionPage() {
+  const [nutrition, setNutrition] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchNutrition() {
+      const { data, error } = await supabase
+        .from('nutrition')
+        .select('*')
+      
+      if (data) setNutrition(data)
+      setLoading(false)
+    }
+    fetchNutrition()
+  }, [])
   return (
     <div className="min-h-screen bg-stone-50 pb-24">
       {/* Hero Section */}
@@ -129,14 +129,18 @@ export default function NutritionPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {healthBenefits.map((benefit) => (
-              <div key={benefit.title} className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-sm flex gap-6 group hover:shadow-md transition-shadow">
-                <div className={cn("w-16 h-16 rounded-2xl shrink-0 flex items-center justify-center transition-transform group-hover:scale-110", benefit.bg)}>
-                  <span className={cn("material-symbols-outlined text-3xl", benefit.color)}>{benefit.icon}</span>
+            {loading ? (
+              <div className="col-span-full py-20 text-center animate-pulse text-emerald-900/40 font-black uppercase tracking-widest">
+                Menganalisis Profil Nutrisi...
+              </div>
+            ) : (nutrition.length > 0 ? nutrition : healthBenefitsFallback).map((benefit) => (
+              <div key={benefit.title || benefit.name} className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-sm flex gap-6 group hover:shadow-md transition-shadow">
+                <div className={cn("w-16 h-16 rounded-2xl shrink-0 flex items-center justify-center transition-transform group-hover:scale-110", benefit.bg_color || benefit.bg || "bg-emerald-50")}>
+                  <span className={cn("material-symbols-outlined text-3xl", benefit.accent_color || benefit.color || "text-emerald-600")}>{benefit.icon || 'nutrition'}</span>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-xl font-bold text-on-surface tracking-tight">{benefit.title}</h4>
-                  <p className="text-sm text-stone-500 leading-relaxed font-sans">{benefit.desc}</p>
+                  <h4 className="text-xl font-bold text-on-surface tracking-tight">{benefit.name || benefit.title}</h4>
+                  <p className="text-sm text-stone-500 leading-relaxed font-sans">{benefit.benefit || benefit.desc}</p>
                 </div>
               </div>
             ))}
