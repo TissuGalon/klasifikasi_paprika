@@ -1,8 +1,48 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useState } from "react"
+import { createSupabaseClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const supabase = createSupabaseClient()
+  const router = useRouter()
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      
+      if (profile?.role === 'admin') {
+        router.push('/admin/dashboard')
+      } else {
+        router.push('/dashboard')
+      }
+      router.refresh()
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-on-surface flex items-center justify-center p-6 bg-[linear-gradient(135deg,rgba(248,250,249,0.92),rgba(242,244,243,0.85)),url('https://lh3.googleusercontent.com/aida-public/AB6AXuC9H1x1notYvJxO4HGP9RW9AWUmmdaIK-b7nncu8ADIxsjWl2IVL-PBBiaRXUOGSmQIFhc8Ar43PGHpqEx07nBfy27ActOlFnc2RSyoN1c6jB7ioDm--Z668x3g0mhLgwzauK152TuS3DLK5uHBEwi57couiJAQbjQv2TvyvMsbvupO6bNQH05dZctEQfFeu0QAgr_N_UvvD7WNmFnvrd4riy_TYQbH6wxNzkWQzp_IBiwEWWpP8sCHs0ctHkf8Kt1ctrRIfEUs6JA')] bg-cover bg-center">
       <main className="w-full max-w-[1100px] grid md:grid-cols-2 bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_40px_80px_-15px_rgba(25,28,28,0.08)] border border-outline-variant/20">
@@ -76,16 +116,25 @@ export default function LoginPage() {
               <p className="text-on-surface-variant font-sans text-sm">Masukkan kredensial Anda untuk mengakses dashboard lab.</p>
             </div>
 
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleLogin}>
+              {error && (
+                <div className="p-3 text-sm text-red-500 bg-red-100/10 rounded-xl border border-red-500/20">
+                  {error}
+                </div>
+              )}
+
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2 font-sans" htmlFor="identity">
-                  Identitas Portal
+                  Identitas Portal (Email)
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400">person</span>
                   <input
-                    type="text"
+                    type="email"
                     id="identity"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-surface-container-low border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-stone-400 focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all"
                     placeholder="nama@lab.phyto.scan"
                   />
@@ -104,12 +153,12 @@ export default function LoginPage() {
                   <input
                     type="password"
                     id="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-surface-container-low border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-stone-400 focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all"
                     placeholder="••••••••"
                   />
-                  <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-on-surface transition-colors">
-                    <span className="material-symbols-outlined text-[20px]">visibility</span>
-                  </button>
                 </div>
               </div>
 
@@ -119,12 +168,12 @@ export default function LoginPage() {
               </div>
 
               <button
-                type="button"
-                className="w-full py-4 rounded-xl bg-gradient-to-br from-primary to-primary-container text-on-primary font-heading font-bold text-lg shadow-xl shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                onClick={() => window.location.href = '/dashboard'}
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 rounded-xl bg-gradient-to-br from-primary to-primary-container text-on-primary font-heading font-bold text-lg shadow-xl shadow-primary/20 hover:opacity-95 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:active:scale-100"
               >
-                Inisialisasi Sesi
-                <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                {loading ? "Memuat..." : "Inisialisasi Sesi"}
+                {!loading && <span className="material-symbols-outlined text-xl">arrow_forward</span>}
               </button>
             </form>
 
@@ -155,7 +204,7 @@ export default function LoginPage() {
             
             <p className="mt-12 text-center text-xs text-on-surface-variant font-sans">
               Peneliti baru? 
-              <a href="#" className="text-primary font-bold hover:underline ml-1">Ajukan Pendaftaran</a>
+              <a href="/register" className="text-primary font-bold hover:underline ml-1">Ajukan Pendaftaran</a>
             </p>
           </div>
         </div>

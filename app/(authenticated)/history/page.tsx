@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 
 export default function HistoryPage() {
-  const [logs, setLogs] = useState([])
+  const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
