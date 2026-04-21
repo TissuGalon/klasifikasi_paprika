@@ -43,32 +43,32 @@ export default function RegisterPage() {
       <main className="w-full max-w-[1100px] grid md:grid-cols-2 bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_40px_80px_-15px_rgba(25,28,28,0.08)] border border-outline-variant/20">
         
         {/* Left Side: Brand Narrative & Imagery */}
-        <div className="hidden md:flex flex-col justify-between p-12 bg-secondary-container relative overflow-hidden">
+        <div className="hidden md:flex flex-col justify-between p-12 bg-primary-container relative overflow-hidden">
           {/* Decorative Grain Texture */}
           <div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]"></div>
           
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-10">
-              <div className="w-10 h-10 bg-on-secondary-container rounded-lg flex items-center justify-center">
-                <span className="material-symbols-outlined text-secondary text-2xl">science</span>
+              <div className="w-10 h-10 bg-on-primary-container rounded-lg flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-2xl">science</span>
               </div>
-              <span className="font-heading text-2xl font-black tracking-tighter text-on-secondary-container">PhytoScan</span>
+              <span className="font-heading text-2xl font-black tracking-tighter text-on-primary-container">PhytoScan</span>
             </div>
             
             <div className="space-y-6">
               <span className="px-3 py-1 bg-emerald-900/40 text-emerald-100 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] backdrop-blur-md border border-emerald-500/20">
                 Pendaftaran Peneliti
               </span>
-              <h1 className="font-heading text-5xl font-black text-on-secondary-container leading-[1.1] tracking-tight">
-                Bergabung dengan <span className="text-secondary">Revolusi Agrikultur.</span>
+              <h1 className="font-heading text-5xl font-black text-on-primary-container leading-[1.1] tracking-tight">
+                Bergabung dengan <span className="text-primary">Revolusi Agrikultur.</span>
               </h1>
-              <p className="text-on-secondary-container/70 text-lg leading-relaxed font-sans max-w-sm">
-                Jadilah bagian dari peneliti yang menggunakan AI untuk memberantas penyakit tanaman secara akurat.
+              <p className="text-on-primary-container/70 text-lg leading-relaxed font-sans max-w-sm">
+                Jadilah bagian dari peneliti yang menggunakan AI untuk klasifikasi kualitas buah paprika secara akurat.
               </p>
             </div>
           </div>
           
-          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-on-secondary-container/5 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-on-primary-container/5 rounded-full blur-3xl"></div>
         </div>
 
         {/* Right Side: Register Form */}
@@ -117,7 +117,7 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-surface-container-low border-none rounded-xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-stone-400 focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all"
-                    placeholder="nama@lab.phyto.scan"
+                    placeholder="pakar@paprika.lab.id"
                   />
                 </div>
               </div>
@@ -150,10 +150,24 @@ export default function RegisterPage() {
               </button>
             </form>
 
-            <p className="mt-12 text-center text-xs text-on-surface-variant font-sans">
-              Sudah memiliki akun? 
-              <a href="/login" className="text-primary font-bold hover:underline ml-1">Masuk di sini</a>
-            </p>
+            <div className="pt-8 space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-outline-variant/30"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-surface px-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest font-sans">Sudah Terdaftar?</span>
+                </div>
+              </div>
+
+              <a 
+                href="/login" 
+                className="w-full py-4 rounded-xl border-2 border-primary/20 text-primary font-heading font-bold text-lg hover:bg-primary/5 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                Masuk ke Portal
+                <span className="material-symbols-outlined text-xl">login</span>
+              </a>
+            </div>
           </div>
         </div>
       </main>
