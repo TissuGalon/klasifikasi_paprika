@@ -3,10 +3,12 @@
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { createSupabaseClient } from "@/utils/supabase/client"
+import { useRouter } from "next/navigation"
 
 
 export default function ScanPage() {
   const supabase = createSupabaseClient()
+  const router = useRouter()
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showResults, setShowResults] = useState(false)
@@ -43,10 +45,14 @@ export default function ScanPage() {
 
   const saveClassification = async (result: string, confidence: number, imageUrl: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("User not authenticated")
+
       const { data, error } = await supabase
         .from('classifications')
         .insert([
           { 
+            user_id: user.id,
             result, 
             confidence: confidence / 100, 
             image_url: imageUrl,
@@ -327,7 +333,7 @@ export default function ScanPage() {
 
                 <div className="pt-4 border-t border-surface-container">
                   <button 
-                    onClick={() => alert("Laporan telah disimpan ke Riwayat Klasifikasi.")}
+                    onClick={() => router.push('/history')}
                     className="w-full py-3 bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg"
                   >
                     <span className="material-symbols-outlined">description</span>
